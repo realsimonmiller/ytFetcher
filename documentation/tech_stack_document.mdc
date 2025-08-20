@@ -1,0 +1,135 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+# Tech Stack Document
+
+This document outlines the technology choices made for the YouTube Channel Video Downloader script. It explains each component in everyday language so that anyone—technical or not—can understand why each technology was chosen and how it contributes to the project.
+
+## 1. Frontend Technologies
+
+Although this project does not have a graphical user interface (GUI), it does present an interface to the user via the command line (terminal). The following tools and libraries make that experience smooth and user-friendly:
+
+- **Python’s `argparse` library**
+  - Provides a clear, consistent way to accept the YouTube channel URL (and optional flags, like date filters or tool choice) from the user.
+  - Automatically generates help messages, so users can type `--help` to see usage instructions.
+
+- **Desktop Notifications with `notify-send`**
+  - Delivers a quick popup on the user’s desktop when the download session completes.
+  - Keeps users informed without having to watch the terminal output constantly.
+
+- **Console Output Styling** (optional via Python’s built-in `print` formatting)
+  - Shows real-time progress, retry attempts, and error messages in a readable format.
+
+## 2. Backend Technologies
+
+All the core work—fetching video lists, downloading videos, tracking progress—is handled by Python scripts and a few key libraries:
+
+- **Python 3.8+**
+  - Ensures compatibility with modern libraries and language features.
+  - Simplifies installation on Arch Linux and other platforms.
+
+- **`yt-dlp` and `youtube-dl` libraries**
+  - These are the engines that actually download videos from YouTube.
+  - The script is configurable: users can pick either tool via a command-line flag or config setting.
+  - Both support fetching metadata (titles, dates) and downloading the highest available video quality.
+
+- **Plain Text Log File**
+  - Stores one video ID per line to remember which videos have already been downloaded.
+  - A simple, human-readable approach that requires no external database software.
+
+- **Built-in File I/O and Logging**
+  - The script reads and writes the log file using Python’s standard file operations.
+  - Error messages (video URL and exception details) are appended to a separate error log for review.
+
+- **Error-Handling and Retry Logic**
+  - The script automatically retries failed downloads up to **three times**.
+  - After three unsuccessful attempts, it skips the video and moves on, recording the failure in the error log.
+
+## 3. Infrastructure and Deployment
+
+This is a lightweight, locally run script designed for Arch Linux. Here’s how we ensure easy setup and reliability:
+
+- **Arch Linux Compatibility**
+  - Tested on Arch Linux to integrate smoothly with its package manager and system libraries.
+
+- **Virtual Environment (`virtualenv`)**
+  - Run `python3 -m venv env` and `source env/bin/activate` to isolate dependencies.
+  - Prevents conflicts between system-wide Python packages and project-specific libraries.
+
+- **Version Control with Git**
+  - Tracks all changes to the script, configuration files, and documentation.
+  - Enables rollbacks and collaborative development via platforms like GitHub or GitLab.
+
+- **Manual Execution**
+  - The script is run by typing a single command in the terminal.
+  - No scheduled jobs (cron) are required—users choose when to fetch new videos.
+
+*Optional Enhancements:*
+- **CI/CD Pipelines** (e.g., GitHub Actions)
+  - Automatically run linting (flake8, black) or unit tests on each commit.
+  - Ensures code quality and prevents regressions.
+
+## 4. Third-Party Integrations
+
+The script relies on a few external tools and services to do its job:
+
+- **`yt-dlp` / `youtube-dl`**
+  - Open-source command-line programs that understand YouTube’s internal API and formats.
+
+- **`notify-send`**
+  - A desktop notification utility available on most Linux distributions.
+
+- **(Optional) YouTube Data API**
+  - Can be used if finer control or authenticated access is needed in the future.
+  - Requires an API key and the `google-api-python-client` library.
+
+## 5. Security and Performance Considerations
+
+To keep the script safe, reliable, and fast, we’ve built in the following measures:
+
+- **Dependency Isolation**
+  - Virtual environments prevent untrusted or outdated packages from affecting the system.
+
+- **Duplicate Prevention**
+  - The plain text log file ensures that each video is downloaded only once, even across restarts.
+
+- **Retry Strategy**
+  - Three download attempts per video balance resilience against network hiccups with overall throughput.
+
+- **Error Logging**
+  - All exceptions are captured with details (video URL, error message) and saved for user review.
+
+- **Efficient Processing**
+  - Video IDs are loaded into memory as a set for quick “already-downloaded” checks.
+  - Video list is sorted once (newest first) to prioritize recent content.
+
+## 6. Development Tools
+
+While not part of the runtime, these tools streamline the script’s creation:
+
+- **Cursor (AI-powered IDE)**
+- **OpenAI GPT-4o, Gemini 2.5 Pro, Gemini 2.0 Flash, Claude 3.7 Sonnet**
+  - AI assistants that helped generate and review the code.
+
+## 7. Conclusion and Overall Tech Stack Summary
+
+In summary, this project uses a straightforward, lightweight combination of technologies designed for ease of use, reliability, and efficiency:
+
+- **Language & Runtime**: Python 3.8+ in an isolated virtual environment
+- **Download Engines**: Configurable choice of `yt-dlp` or `youtube-dl`
+- **Logging**: Plain text files for successful downloads and a separate error log
+- **User Interface**: Command-line driven with helpful `argparse` flags and `notify-send` desktop alerts
+- **Version Control**: Git for tracking changes and collaboration
+
+Together, these choices ensure that the script:
+
+- Runs locally without heavy infrastructure
+- Avoids duplicate downloads even after crashes or restarts
+- Lets users pick their preferred downloader tool
+- Provides clear feedback and error records
+
+By focusing on well-supported, open-source components and simple file-based logging, the project stays accessible to any user on Arch Linux while remaining robust and maintainable.

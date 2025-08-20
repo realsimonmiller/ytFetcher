@@ -1,0 +1,38 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+# App Flow Document
+
+## Onboarding and Sign-In/Sign-Up
+
+Because this solution is a command-line script rather than a traditional web or mobile application, the onboarding process begins with discovering or cloning the repository on an Arch Linux machine. The user first opens a terminal and navigates to the project directory. To ensure a clean environment, the user creates a Python virtual environment by running `python3 -m venv env` and then activates it with `source env/bin/activate`. Once the environment is active, the user installs dependencies via `pip install -r requirements.txt`. There is no sign-in or sign-up via credentials, and there is no password recovery flow since authentication is not required. The script is ready to run after dependencies are installed, and no user account or session management is involved.
+
+## Main Dashboard or Home Page
+
+Once the environment is set up, the user invokes the script from the command line by typing `python youtube_fetcher.py <YouTubeChannelURL>`. At launch, the script prints a welcome message that confirms the chosen download tool (either `yt-dlp` or `youtube-dl`), the output folder root (`downloads/youtubeFetcher`), and the location of the download log file. The script then waits for the user to confirm or adjust optional flags such as a date range filter or tool selection. After confirmation, the script proceeds directly into fetching the channel data. There is no graphical dashboard or menu system; the terminal output serves as the main interface, informing the user of progress and next steps.
+
+## Detailed Feature Flows and Page Transitions
+
+When the user supplies a valid YouTube channel URL, the script first parses it to extract the channel identifier. A dedicated function determines whether the URL corresponds to a username, channel ID, or custom URL and then constructs the appropriate request to retrieve the list of all publicly available videos. If the user has enabled a date range filter by passing optional flags, the script applies this constraint when assembling the list of videos.
+
+After fetching the raw video metadata, the script sorts the collection so that the newest uploads appear first. This sorted list becomes the queue of videos to process. Before each download attempt, the script reads the existing plain text log file—where each line contains a previously downloaded video ID—and loads these identifiers into memory. For each video in the queue, the script checks whether its ID is already recorded in the log. If it is, the script skips directly to the next video without making any download requests.
+
+For any video not yet downloaded, the download manager invokes the chosen tool with parameters to fetch the highest quality format. The user may have selected the downloader via a configuration file or a command-line flag at startup. If a download attempt fails, the manager automatically retries up to three times. Each failure appends an entry to a separate error log that captures the video URL, its ID, and the exact error message. If retries are exhausted, the script records the failure and continues with the next video rather than halting.
+
+Upon successful download, the script immediately appends the video ID to the download log and moves the video file into a directory structure under `downloads/youtubeFetcher/{ChannelName}/{VideoTitle}`. This ensures that completed videos will not be reprocessed if the script is restarted. After handling all videos in the queue, the script triggers a desktop notification summarizing the number of new downloads and any videos that failed after maximum retries. The script then prints a final summary message to the console and exits cleanly.
+
+## Settings and Account Management
+
+All user preferences are managed either through a configuration file or via command-line flags when invoking the script. Settings include the choice of downloader (`yt-dlp` or `youtube-dl`), the root output directory, optional date range filters, and maximum retry count. The user may edit a simple text‐based configuration file located alongside the script to set defaults for these options. If the user needs to change a setting during execution, they can rerun the script with the appropriate flag and value. Since there is no user account system or profile, there is no traditional account management section. To return to the main script flow after adjusting settings, the user simply restarts the script with the new parameters.
+
+## Error States and Alternate Paths
+
+If the user supplies an invalid or malformed YouTube channel URL, the script immediately prints an error message to the console explaining that the URL could not be parsed and suggests the correct format. It then exits with a nonzero status code. If the script encounters network connectivity issues while fetching the video list or during downloads, it retries the request or download up to three times per video. All errors are logged to an error log file that includes timestamps, video IDs, URLs, and the full error message. In the event that the script cannot create the required output directories or write to the log files—due to file system permissions or missing disk space—it prints a clear message and exits. After resolving any permission or storage issues, the user can rerun the script, which will skip already downloaded videos and pick up where it left off.
+
+## Conclusion and Overall App Journey
+
+In summary, the user journey begins with cloning the repository and setting up a Python 3.8+ virtual environment. After installing dependencies, the user runs the script with a YouTube channel URL and optional flags for tool choice and date range. The script fetches video metadata, sorts by newest first, checks a plain text log to skip already downloaded videos, and invokes the chosen downloader to retrieve new content. Successful downloads are logged immediately and organized into a clear folder structure. Any failures trigger retries, and persistent errors are recorded for review. When the session completes, the user receives a desktop notification and a console summary. This flow ensures that each run retrieves only new content, handles errors gracefully, and leaves the user with an organized collection of high-quality videos without repeated downloads.

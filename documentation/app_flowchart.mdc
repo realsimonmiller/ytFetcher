@@ -1,0 +1,28 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+flowchart TD
+    A[Activate virtual environment] --> B[Install dependencies]
+    B --> C[Read configuration]
+    C --> D[Ensure log files exist]
+    D --> E[Get CLI input]
+    E --> F[Fetch channel metadata]
+    F --> G[Sort videos and apply date filters]
+    G --> H[Load downloaded videos log]
+    H --> I[Filter duplicates]
+    I --> J[Initialize video loop]
+    J --> K[Attempt video download]
+    K --> L{Download success}
+    L-->|Yes|M[Log video ID to downloaded_videos log]
+    L-->|No|N{Retries less than 3}
+    N-->|Yes|K
+    N-->|No|O[Log failure to errors log]
+    M --> P[Move file to downloads directory]
+    O --> P
+    P --> Q[Continue next video]
+    Q --> R[Send desktop notification]
+    R --> S[End]

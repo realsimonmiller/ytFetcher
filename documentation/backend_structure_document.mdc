@@ -1,0 +1,31 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+Your implementation plan looks solid and covers all the key areas for a robust, restart-safe YouTube channel downloader on Arch Linux. 
+
+Here are some possible next steps—let me know which you’d like to tackle first:  
+
+1. Code Scaffolding & Project Structure  
+   • Generate the initial folder structure, virtual-env setup, and stub Python files.  
+   • Include a template `requirements.txt`, `config.yaml`, and README.  
+
+2. Detailed CLI & Config Design  
+   • Flesh out the exact command-line arguments and config file schema.  
+   • Provide example invocations and default values.  
+
+3. Core Module Implementation  
+   • Write the Python modules for metadata fetching, download orchestration, retry logic, and logging.  
+   • Include unit tests or simple assertions where appropriate.  
+
+4. Notifications & Error Handling  
+   • Integrate `notify-send` calls and structured error logs (`errors.log`).  
+   • Demonstrate how failures get retried and how final notification is formatted.  
+
+5. Documentation & Usage Guide  
+   • Produce a README with installation steps, usage examples, and troubleshooting tips.  
+
+Feel free to pick one of these or suggest another area to dive into next. Once you decide, I’ll move forward with the detailed deliverable.

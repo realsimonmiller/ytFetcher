@@ -1,0 +1,22 @@
+cd /home/worm/Applications/ytFetcher
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Option 1: Run in interactive mode (recommended for new users)
+python run_interactive.py
+
+# Option 2: Run with command line arguments
+python -m src.main --channel-url "https://www.youtube.com/@CoasterFan2105/videos" --downloader yt-dlp --output-path downloads/youtubeFetcher
+
+# Option 2b: Run with keyword filter (e.g., only "steam trains" videos)
+python -m src.main --channel-url "https://www.youtube.com/@CoasterFan2105/videos" --keyword-filter "steam trains" --downloader yt-dlp --output-path downloads/youtubeFetcher
+
+# Option 2c: Run with custom quality (e.g., CRF 26 for faster processing)
+python -m src.main --channel-url "https://www.youtube.com/@CoasterFan2105/videos" --crf-quality 26 --downloader yt-dlp --output-path downloads/youtubeFetcher
+
+# Option 2d: Download a single video
+python -m src.main --channel-url "https://www.youtube.com/watch?v=VIDEO_ID" --crf-quality 23 --downloader yt-dlp --output-path downloads/single_video
+
+# Option 3: Run main module in interactive mode
+python -m src.main --interactive

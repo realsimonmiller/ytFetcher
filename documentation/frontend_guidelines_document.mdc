@@ -1,0 +1,141 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+# Frontend Guideline Document
+
+This document describes the “frontend” for our YouTube-downloader script—namely, the command-line interface (CLI) that users interact with. It covers how the CLI is structured, the design principles it follows, styling in the terminal, component organization, state handling, navigation (commands), performance considerations, and testing.
+
+## 1. Frontend Architecture
+
+### Overview
+- The “frontend” is a Python-based command-line interface. Users invoke the script with arguments (channel URL, date range, downloader choice, etc.).
+- We use the built-in `argparse` library to parse commands and flags.
+- Core modules:
+  - `cli.py` – sets up the argument parser and routes commands.
+  - `downloader.py` – wraps `yt-dlp`/`youtube-dl` calls.
+  - `logger.py` – handles download logs and error logs.
+  - `notifier.py` – sends desktop notifications via `notify-send`.
+  - `utils.py` – helper functions (e.g., sorting videos by date).
+
+### Scalability, Maintainability, Performance
+- Modular structure: Each responsibility (parsing, downloading, logging) lives in its own file. Easy to extend (e.g., add new flags or notification methods).
+- Light dependencies: Rely primarily on Python standard library plus one downloader tool. Reduces maintenance overhead.
+- CLI startup cost is minimal; heavy work (video fetching) happens in dedicated modules.
+
+## 2. Design Principles
+
+1. **Usability**  
+   - Clear help messages via `argparse`.  
+   - Sensible defaults (e.g., use `yt-dlp` by default, download newest videos first).
+2. **Simplicity**  
+   - One primary entry point (`cli.py`).  
+   - Minimal required arguments; optional flags for advanced features (date range, downloader choice).
+3. **Feedback & Transparency**  
+   - Real-time console output for download progress.  
+   - Clear error messages and retry notifications.
+4. **Resilience**  
+   - Auto-retry logic (up to 3 times) with clear status updates.  
+   - Skips already-downloaded videos using the log file.
+
+## 3. Styling and Theming
+
+### Terminal Styling
+- We use ANSI colors (via the `colorama` library) for emphasis:
+  - **Green** for successes (download complete).  
+  - **Yellow** for warnings (retrying).  
+  - **Red** for errors (skipped video).  
+  - **Cyan** for informational messages (starting download, summary).
+
+### “Theme”
+- Flat, minimal: No fancy graphics, just color-coded text.
+- Emphasis on readability on dark and light terminals.
+
+### Color Palette (ANSI)
+- Success: `[32m` (Green)
+- Warning: `[33m` (Yellow)
+- Error:   `[31m` (Red)
+- Info:    `[36m` (Cyan)
+- Reset:   `[0m`
+
+### Font
+- Uses the user’s terminal font. No special font requirements.
+
+## 4. Component Structure
+
+├── cli.py          # Entry point, argument parsing  
+├── downloader.py   # Wraps yt-dlp/youtube-dl  
+├── logger.py       # Manages downloaded_videos.log and error.log  
+├── notifier.py     # Desktop notifications via notify-send  
+├── utils.py        # Helpers (sorting, path building)  
+└── tests/          # Unit and integration tests
+
+- Each module exposes simple functions or classes.  
+- Reusable helpers in `utils.py`, e.g., `build_output_path(channel, title)`.
+- This component-based layout simplifies adding features (new flags, new notification methods).
+
+## 5. State Management
+
+- **Global Config Object**  
+  - After parsing, arguments are stored in a `Config` dataclass (`config.py`).  
+  - Passed to modules that need settings (downloader choice, date range, log paths).
+- **Download Log**  
+  - Plain text file (`downloaded_videos.log`) holds completed video IDs, one per line.  
+  - Loaded into a Python `set` at startup for quick existence checks.
+- **Error Handling State**  
+  - In-memory retry counters per video.  
+  - Errors logged to `error.log` after 3 failures.
+
+## 6. Routing and Navigation
+
+- Using `argparse` subcommands and flags:
+
+```
+usage: youtube_fetcher.py [-h] 
+                           --channel CHANNEL_URL
+                           [--start-date YYYY-MM-DD] [--end-date YYYY-MM-DD]
+                           [--downloader {yt-dlp,youtube-dl}]
+                           [--output-dir PATH]
+```
+
+- **Flags**:
+  - `--channel` (required): Channel URL.
+  - `--start-date`, `--end-date` (optional): Filter videos by date.
+  - `--downloader` (optional): Choose between `yt-dlp` or `youtube-dl`.
+  - `--output-dir` (optional): Base download folder.
+
+- Users move through the application by providing flags; no interactive prompts.
+
+## 7. Performance Optimization
+
+1. **Newest-First Fetch**  
+   - We request the channel’s video list and sort in descending date order.  
+   - Allows early exit once we hit already-downloaded videos.
+2. **Skip Duplicates Early**  
+   - Check log before starting a download to avoid unnecessary work.
+3. **Lightweight Dependencies**  
+   - Rely on system’s `yt-dlp`/`youtube-dl` binary; we don’t bundle heavy GUI libs.
+4. **Parallelism (Future)**  
+   - Could introduce a thread pool for multiple simultaneous downloads if needed.
+
+## 8. Testing and Quality Assurance
+
+- **Unit Tests** (`pytest`):
+  - Test `utils.build_output_path` with various channel names and titles.
+  - Test log-reading and writing in `logger.py` using temp files.
+- **Integration Tests**:
+  - Use small test channel or mock responses to validate end-to-end flow.
+- **CLI Tests**:
+  - Leverage `pytest-cli` or `click`’s `CliRunner` pattern (adapted for `argparse`) to simulate arguments and capture output.
+- **Error Cases**:
+  - Force downloader failures to ensure retry logic and error logging works.
+- **Linting & Formatting**:
+  - `flake8` for code style.  
+  - `black` for formatting.
+
+## 9. Conclusion and Overall Frontend Summary
+
+Our CLI-based frontend provides a clear, color-coded, and robust interface for automated YouTube downloads. By leveraging Python’s `argparse` for navigation, modular components for maintainability, and ANSI styling for readability, the tool offers an intuitive experience even for non-technical users. The combination of a simple design, thorough logging, and retry logic ensures reliability. In future iterations, we can expand performance via parallel downloads and richer notifications. This frontend setup aligns with the project’s goals: easy setup (`virtualenv`), clear usage, and seamless automation on Arch Linux.

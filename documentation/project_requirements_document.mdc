@@ -1,0 +1,184 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+# Project Requirements Document
+
+## 1. Project Overview
+
+This project delivers a simple, reliable Python script that runs locally on an Arch Linux machine to batch-download every publicly available video from a given YouTube channel. You supply the channel URL on the command line, and the script uses either **yt-dlp** or **youtube-dl** (configurable) to fetch the highest-quality version of each video. A plain-text log file tracks previously downloaded video IDs so that, even if the script crashes or is restarted, it will automatically skip videos already obtained.
+
+We’re building this tool to automate and streamline the process of archiving channel content without manual tracking. Key success criteria include:  
+- 100% avoidance of duplicate downloads across runs  
+- Clean error handling with retry logic  
+- A clear folder structure (`downloads/youtubeFetcher/{channelName}/{videoTitle}`)  
+- Desktop notifications summarizing each session  
+
+---
+
+## 2. In-Scope vs. Out-of-Scope
+
+**In-Scope (v1 features)**  
+- Command-line interface accepting a YouTube channel URL  
+- Configuration option (file or flag) to choose between `yt-dlp` and `youtube-dl`  
+- Fetching and parsing all public video metadata (ID, title, upload date)  
+- Sorting videos newest-first, with an optional date-range filter  
+- Plain-text log (`downloaded_videos.log`) holding one video ID per line  
+- Skip logic to avoid re-downloading logged videos  
+- Download manager with up to 3 automatic retries per video  
+- Console output of progress and detailed error logging (`errors.log`)  
+- File organization under `downloads/youtubeFetcher/{channelName}/{videoTitle}`  
+- Desktop notifications (via `notify-send`) after each run  
+- Recommendation and guidance for setting up a Python 3.8+ virtual environment  
+
+**Out-of-Scope (deferred to later phases)**  
+- Handling private or unlisted videos (no authentication)  
+- Automated scheduling (cron jobs)  
+- Partial-file resume support  
+- Email or SMS alerts  
+- Web or graphical user interface  
+- Parallel/multi-threaded downloads  
+
+---
+
+## 3. User Flow
+
+1. **Environment & Launch**  
+   - User opens a terminal on Arch Linux, activates a Python 3.8+ virtual environment (e.g. `python3 -m venv env && source env/bin/activate`).  
+   - Inside the environment, they ensure dependencies (`yt-dlp`/`youtube-dl`, `notify-send`) are installed.  
+   - The script reads a config file (or command-line flags) to determine the downloader tool, output path, and optional date filters. It also ensures `downloaded_videos.log` exists or creates it.
+
+2. **Download Session**  
+   - The user runs:  
+     ```bash
+     python fetch_videos.py https://www.youtube.com/channel/CHANNEL_ID \
+       --downloader yt-dlp \
+       --after-date 2023-01-01
+     ```  
+   - The script fetches all public video metadata, sorts by newest first, loads logged IDs into memory, and iterates the list.  
+   - For each new video, it invokes the selected tool to download the highest quality, retrying up to 3 times on transient failures.  
+   - Successful downloads are moved into `downloads/youtubeFetcher/{channelName}/{videoTitle}`, and the video ID is appended to `downloaded_videos.log`. Failures after 3 retries go into `errors.log`.  
+   - When all videos are processed, a desktop notification summarizes “X new videos downloaded, Y failures,” then the script exits.
+
+---
+
+## 4. Core Features
+
+- **CLI Input & Validation**  
+  - Accepts channel URL and optional flags: `--downloader` (yt-dlp|youtube-dl), `--after-date`, `--output-path`
+
+- **Configuration Loader**  
+  - Reads defaults from a config file (e.g. `config.yaml`) for downloader choice and output folder
+
+- **Channel Metadata Fetcher**  
+  - Retrieves video IDs, titles, upload dates via YouTube Data API or RSS/HTML parsing
+
+- **Sorting & Filtering**  
+  - Orders videos by date (newest first); applies optional `after-date` filter
+
+- **Duplicate Detection**  
+  - Loads `downloaded_videos.log` (one ID per line) to skip previously downloaded items
+
+- **Downloader Abstraction Layer**  
+  - Wraps calls to `yt-dlp` or `youtube-dl` with parameters for highest quality
+
+- **Download Manager & Retry Logic**  
+  - Retries failed downloads up to 3 times; logs failures in `errors.log` with video URL and error message
+
+- **Logging Mechanism**  
+  - Appends each successfully downloaded video ID to `downloaded_videos.log`
+
+- **File Organization**  
+  - Creates folders: `downloads/youtubeFetcher/{channelName}`; saves videos as `{videoTitle}.mp4` (sanitized)
+
+- **Desktop Notifications**  
+  - Uses `notify-send` to report final counts of successes and failures
+
+- **Environment Isolation**  
+  - Recommends Python virtual environment for dependency management
+
+---
+
+## 5. Tech Stack & Tools
+
+- **Language & Runtime**  
+  - Python 3.8+  
+
+- **Download Libraries**  
+  - yt-dlp (active fork of youtube-dl)  
+  - youtube-dl (fallback option)
+
+- **Logging**  
+  - Plain text files:  
+    - `downloaded_videos.log` (UTF-8)  
+    - `errors.log`
+
+- **Notifications**  
+  - `notify-send` (Linux desktop notification tool)
+
+- **Environment Management**  
+  - Python virtual environments (`venv`)
+
+- **Development & AI Assistance**  
+  - Cursor IDE (real-time AI-powered suggestions)  
+  - GPT-4o, Gemini 2.5 Pro, Gemini 2.0 Flash, Claude 3.7 Sonnet (for code generation and review)
+
+- **Version Control**  
+  - Git
+
+---
+
+## 6. Non-Functional Requirements
+
+- **Performance**  
+  - Handle channels with hundreds of videos; overall throughput limited by network and downloader tool
+
+- **Reliability**  
+  - Guaranteed skip of already downloaded videos, even after crashes
+
+- **Usability**  
+  - Clear console logs; desktop notifications; simple CLI flags
+
+- **Security**  
+  - No user credentials; only public data  
+  - Sanitize all filesystem paths to prevent injection
+
+- **Maintainability**  
+  - Modular code organization; config file for default settings; venv isolation
+
+- **Portability**  
+  - Target environment: Arch Linux; dependencies installed via `pip`
+
+---
+
+## 7. Constraints & Assumptions
+
+- Python 3.8+ is available on the user’s system.  
+- User will run the script manually (no scheduler).  
+- Only public and unlisted videos supported; no OAuth or login flows.  
+- The downloader tool (`yt-dlp` or `youtube-dl`) is installed in the same environment.  
+- `notify-send` is present (common on most Linux desktops).  
+- Network access is reliable enough for retry logic to work.  
+- Log files reside in the working directory and have write permissions.
+
+---
+
+## 8. Known Issues & Potential Pitfalls
+
+- **YouTube Layout/API Changes**  
+  - HTML parsing or API endpoints may break; consider fallback or periodic updates.
+- **Filesystem Name Conflicts**  
+  - Video titles with special characters must be sanitized to avoid invalid filenames.
+- **Long Paths**  
+  - Deep folder nesting or long titles could hit OS path-length limits.
+- **Partial Downloads**  
+  - Without true resume support, interrupted downloads leave temp files; consider cleaning up on startup.
+- **API Rate Limits**  
+  - If using YouTube Data API, watch for quota exhaustion—otherwise use RSS or scraping.
+- **Missing `notify-send`**  
+  - Provide a CLI-only fallback if notifications fail.  
+
+Mitigation guidelines: sanitize filenames, implement clean-up of temp files, wrap all external calls in try/except, and document fallback behaviors.

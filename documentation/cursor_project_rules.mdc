@@ -1,0 +1,114 @@
+---
+description: Apply these rules when making changes to the project
+globs:
+alwaysApply: true
+---
+
+Update this rule if user requested changes to the project requirement, etc.
+## Project Overview
+
+* **Type:** CLI Python Script
+* **Description:** Python script for Arch Linux to download YouTube videos from a specified channel with configurable downloader, logging, and desktop notifications
+* **Primary Goal:** Automate downloading the newest, highest‐quality videos from a YouTube channel, prevent duplicates, support date filters, and notify the user upon completion
+
+## Project Structure
+
+### Framework-Specific Routing
+
+* **Directory Rules:**
+    * No web framework. Use CLI entry points under `scripts/` invoking modules in `src/`.
+
+### Core Directories
+
+* **Versioned Structure:**
+    * `src/`: Python 3.8+ modules and business logic
+    * `scripts/`: Executable wrappers (`yt_fetcher` CLI)
+    * `downloads/`: `youtubeFetcher/{channelName}/{videoTitle}` storage
+    * `logs/`: `downloaded_videos.log`, `errors.log`
+
+### Key Files
+
+* **Stack-Versioned Patterns:**
+    * `src/youtube_fetcher.py`: Main download logic, retry handling, date filtering
+    * `scripts/yt_fetcher`: Bash or Python CLI launcher with shebang
+    * `requirements.txt`: Pins `yt-dlp` or `youtube-dl`, `virtualenv` settings
+    * `logs/downloaded_videos.log`: One video ID per line to avoid duplicates
+    * `logs/errors.log`: Records failed URL and error message per line
+    * `README.md`: Usage, installation, and configuration guide
+
+## Tech Stack Rules
+
+* **Version Enforcement:**
+    * `python@3.8+`: Must run in a `virtualenv`, no Python features beyond 3.8
+    * `yt-dlp|youtube-dl@latest`: Configurable via `--downloader`; do not mix both in one run
+    * `libnotify`/`notify-send`: Desktop notification on Arch Linux
+    * `bash@5+`: For executable wrapper scripts
+
+## PRD Compliance
+
+* **Non-Negotiable:**
+    * "Accepts a YouTube channel URL as input.": CLI must require this argument
+    * "Downloads the highest quality video.": Always choose best available format
+    * "Maintains a log file to prevent duplicate downloads.": Enforce unique IDs in `downloaded_videos.log`
+    * "Provides desktop notifications on completion.": Use `notify-send` after each download
+    * "Error handling with a retry count of 3, and error logging.": Implement retry logic and append to `errors.log`
+    * "Configurable to switch between yt-dlp and youtube-dl.": Expose `--downloader` flag
+
+## App Flow Integration
+
+* **Stack-Aligned Flow:**
+    * CLI Flow → `scripts/yt_fetcher` parses arguments → invokes `src/youtube_fetcher.py` →
+      1. Fetch video list via chosen downloader
+      2. Filter by date and `downloaded_videos.log`
+      3. Download videos to `downloads/youtubeFetcher/{channel}/{title}`
+      4. Update `downloaded_videos.log` and send notification via `notify-send`
+      5. On error, retry up to 3 times and log to `errors.log`
+
+## Best Practices
+
+* Python
+    * Use `virtualenv` for dependency isolation
+    * Adhere to PEP8 (use `flake8` and `black`)
+    * Use the built-in `logging` module with rotating file handlers
+    * Validate CLI inputs with `argparse`
+
+* yt-dlp / youtube-dl
+    * Pin versions in `requirements.txt` or `pyproject.toml`
+    * Use JSON metadata output for parsing and filtering
+    * Respect `--retries=3` and handle network failures gracefully
+
+* Shell Scripts
+    * Start with `#!/usr/bin/env bash` and `set -euo pipefail`
+    * Check for required commands (`python`, `notify-send`) at runtime
+    * Provide comprehensive `--help` output
+
+## Rules
+
+* Derive folder/file patterns directly from tool versions and CI requirements
+* Place all Python code under `src/` and CLI entry under `scripts/`
+* Never write downloaded files outside `downloads/` directory
+* Do not mix `yt-dlp` and `youtube-dl` calls in the same execution
+
+## Rules Metrics
+
+Add the following instruction for analyzing rules usage:
+
+Before starting the project development, create a metrics file in the root of the project called
+
+`cursor_metrics.md`.
+
+### Instructions:
+
+* Each time a cursor rule is used as context, update `cursor_metrics.md`.
+
+* Use the following format for `cursor_metrics.md:`
+
+Rules Metrics  
+
+Usage  
+
+The number of times rules is used as context
+
+* rule-name.mdc: 5
+* another-rule.mdc: 2
+* ...other rules
