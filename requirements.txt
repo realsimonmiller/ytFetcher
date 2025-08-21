@@ -1,3 +1,19 @@
+# Core dependencies
 yt-dlp
-youtube-dl
-pytest 
+
+# Testing dependencies
+pytest
+pytest-cov
+coverage
+
+# Code quality tools
+flake8
+black
+isort
+mypy
+
+# Code analysis tools
+radon
+
+# Security tools
+safety 

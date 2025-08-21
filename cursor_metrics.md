@@ -1,0 +1,1 @@
+Refer to project rules in `.cursor/rules/`. See `implementation_plan.mdc` for detailed steps. 

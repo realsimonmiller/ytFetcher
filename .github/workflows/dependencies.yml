@@ -31,8 +31,8 @@ jobs:
       - name: Update requirements.txt
         run: |
           # Create a temporary requirements file with latest versions
-          pip install --upgrade yt-dlp youtube-dl
-          pip freeze | grep -E "(yt-dlp|youtube-dl)" > requirements_latest.txt
+                  pip install --upgrade yt-dlp
+        pip freeze | grep -E "(yt-dlp)" > requirements_latest.txt
           
           echo "Current requirements:"
           cat requirements.txt

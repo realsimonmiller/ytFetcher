@@ -1,0 +1,89 @@
+Update this rule if user requested changes to the project requirement, etc.
+# Implementation plan
+
+## Phase 1: Environment Setup
+
+1. **Prevalidation**: In the project root, check for existing Python project indicators (`setup.py`, `pyproject.toml`, `src/`). If found, skip project initialization.  (Project Goal)
+2. **Ensure OS**: Run `uname -a` and verify it includes “Arch” to confirm Arch Linux environment. (Project Goal)
+3. **Install Python**: If `python3 --version` reports below 3.8, run `sudo pacman -Syu python` to install Python 3.8+ exactly. (Tech Stack: Language)
+4. **Validation**: Execute `python3 --version` and confirm output `Python 3.8.x` or higher. (Tech Stack: Language)
+5. **Create Virtual Environment**: Run `python3 -m venv venv` to create `venv/` in the project root. (Tech Stack: Language)
+6. **Activate Virtual Environment**: Run `source venv/bin/activate`. (Tech Stack: Language)
+7. **Create .gitignore**: In `/`, add entries: `venv/`, `downloaded_videos.log`, `errors.log`. (Tech Stack: Core Tools)
+8. **Setup Cursor**: Create `cursor_metrics.md` in the project root and add a comment referencing `cursor_project_rules.mdc`. (IDE: Cursor)
+
+## Phase 2: Dependencies Installation
+
+9. **Initialize pip**: Run `pip install --upgrade pip setuptools`. (Tech Stack: Core Tools)
+10. **Install Download Libraries**: Run `pip install yt-dlp==2023.12.31 youtube-dl==2023.12.31`. (Tech Stack: Download Libraries)
+11. **Install Notification Tool**: Verify `notify-send` is installed via `pacman -Qs libnotify`; if missing, run `sudo pacman -S libnotify`. (Tech Stack: Notifications)
+12. **Freeze Requirements**: Run `pip freeze > requirements.txt`. (Tech Stack: Core Tools)
+
+## Phase 3: Script Structure
+
+13. **Create Source Directory**: Create `/src/`. (Project Goal)
+14. **Entry Point**: Create `/src/main.py`. (Project Goal)
+15. **Argument Parser**: Inside `main.py`, add `argparse` to accept `--channel-url`, `--downloader` (yt-dlp|youtube-dl), `--after-date`, and `--output-path`. (App Flow: Input)
+16. **Configuration Defaults**: Create `/src/config.py` with default values: `DOWNLOADER='yt-dlp'`, `OUTPUT_DIR='downloads/youtubeFetcher'`, `MAX_RETRIES=3`. (Configurations and Settings)
+
+## Phase 4: Fetching & Metadata
+
+17. **Fetch Video List**: In `/src/fetcher.py`, implement `get_videos(channel_url)` using `yt_dlp.YoutubeDL().extract_info({})` to retrieve video ID, title, and upload date. (App Flow: Fetching)
+18. **Validation**: Add a unit test `/tests/test_fetcher.py` that mocks a known channel URL and asserts returned list structure. (Project Goal)
+
+## Phase 5: Sorting & Filtering
+
+19. **Sort Videos**: In `/src/processor.py`, implement `sort_videos(videos)` to return list sorted by upload date descending. (App Flow: Sorting and Filtering)
+20. **Date Filter**: Extend `sort_videos` to accept `after_date` and filter out older videos. (App Flow: Sorting and Filtering)
+21. **Validation**: Add `/tests/test_processor.py` to verify sorting order and date filter logic. (Project Goal)
+
+## Phase 6: Duplicate Check & Logging
+
+22. **Initialize Logs**: At runtime in `main.py`, open or create `downloaded_videos.log` and `errors.log` in project root. (Key Features: Logging)
+23. **Load Downloaded IDs**: Implement `load_downloaded_ids()` in `/src/logging_util.py` to read `downloaded_videos.log` into a set. (App Flow: Duplicate Check)
+24. **Validation**: Add `/tests/test_logging_util.py` to confirm IDs are loaded correctly from a sample log. (Project Goal)
+
+## Phase 7: Downloading & Retry Logic
+
+25. **Download Function**: In `/src/downloader.py`, implement `download_video(video, downloader, retries)` that calls external tool (`yt-dlp` or `youtube-dl`) via `subprocess.run`, capturing stdout/stderr. (App Flow: Download)
+26. **Retry Mechanism**: Wrap `download_video` with loop up to `MAX_RETRIES=3`, on failure append entry to `errors.log`, then retry after 1s. (Key Features: Resilience)
+27. **Validation**: Add `/tests/test_downloader.py` mocking a failed subprocess call, assert retry count and error log entry. (Project Goal)
+
+## Phase 8: Organization & Post-Processing
+
+28. **Folder Structure**: After successful download, move file to `{OUTPUT_DIR}/{channel_name}/{video_title}/` using `shutil.move`. Create directories if missing. (Key Features: Organization)
+29. **Log Success**: Append video ID to `downloaded_videos.log`. (Key Features: Logging)
+30. **Validation**: Add `/tests/test_organization.py` that creates temp files and asserts correct directory placement. (Project Goal)
+
+## Phase 9: Notifications & Summary
+
+31. **Collect Summary**: In `main.py`, accumulate counts of `successes` and `failures` after loop. (Project Goal)
+32. **Send Desktop Notification**: Use `subprocess.run(['notify-send', 'YouTube Downloader', summary_text])`. (Key Features: Notifications)
+33. **Validation**: Manually run script and confirm desktop pop-up appears with accurate counts. (Project Goal)
+
+## Phase 10: Integration & Testing
+
+34. **End-to-End Script**: Create `/tests/test_end_to_end.sh` that runs `python src/main.py --channel-url <known channel> --downloader yt-dlp`, then checks `downloads/youtubeFetcher`. (App Flow)
+35. **CI Configuration**: Create `.github/workflows/ci.yml` to run `pytest` and the end-to-end shell script on each push. (Tech Stack: Core Tools)
+36. **Validation**: Push a test branch and confirm CI passes. (Project Goal)
+
+## Phase 11: Packaging & Documentation
+
+37. **CLI Entry Point**: Add `setup.py` with `console_scripts` entry `youtube_fetcher=src.main:main`. (Project Goal)
+38. **README**: Create `README.md` with installation instructions: Arch setup, `venv`, `pip install -r requirements.txt`, usage examples. (Project Goal)
+39. **LICENSE**: Add an appropriate open-source license file. (Project Goal)
+
+## Phase 12: Release & Maintenance
+
+40. **Version Tagging**: Create a Git tag `v1.0.0`. (Project Goal)
+41. **PyPI Release (Optional)**: If publishing, run `python setup.py sdist bdist_wheel` and `twine upload dist/*`. (Project Goal)
+42. **Monitoring**: Recommend periodic log cleanup and dependency updates. (Error Handling)
+
+---
+**Total Steps**: 42
+
+*End of Implementation plan*
+description:
+globs:
+alwaysApply: false
+---
