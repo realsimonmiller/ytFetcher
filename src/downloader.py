@@ -16,7 +16,7 @@ def _build_command(
 
 
 def _build_command_with_format(
-    video: Dict[str, Any], downloader: str, output_path: str, format_strategy: str
+    video: Dict[str, Any], downloader: str, output_path: str, format_strategy: str, use_android: bool = False
 ) -> list[str]:
     url = video.get("webpage_url") or video.get("url") or video.get("id")
     if not url:
@@ -24,7 +24,7 @@ def _build_command_with_format(
     
     output_template = f"{output_path}/%(title)s [%(id)s].%(ext)s"
     if downloader == "yt-dlp":
-        return [
+        cmd = [
             "yt-dlp",
             "-o",
             output_template,
@@ -34,8 +34,6 @@ def _build_command_with_format(
             # Anti-detection measures
             "--user-agent",
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-            "--cookies-from-browser",
-            "chrome",
             # Thumbnail handling
             "--write-thumbnail",
             "--convert-thumbnails",
@@ -48,6 +46,21 @@ def _build_command_with_format(
             "3",
             url,
         ]
+        
+        # Try to add cookies if available, but don't fail if not
+        try:
+            import subprocess
+            result = subprocess.run(["which", "google-chrome"], capture_output=True, text=True)
+            if result.returncode == 0:
+                cmd.extend(["--cookies-from-browser", "chrome"])
+        except Exception:
+            pass  # Skip cookies if Chrome not available
+        
+        # Add Android client if requested
+        if use_android:
+            cmd.extend(["--extractor-args", "youtube:player_client=android"])
+        
+        return cmd
     else:
         raise DownloadError(f"Unsupported downloader: {downloader}")
 
@@ -79,10 +92,15 @@ def download_video(
     # Try different format strategies if the first one fails
     format_strategies = [
         "best[height>=720]/best",  # Prefer 720p+ then best available
-        "best",  # Just get the best available
         "best[height>=480]/best",  # Prefer 480p+ then best available
         "best[height>=360]/best",  # Prefer 360p+ then best available
+        "bv*+ba/b",  # Best video + best audio, merged
         "best",  # Just get the best available
+    ]
+    
+    # Add Android client as a fallback strategy
+    android_strategies = [
+        "best",  # Android client with best available
     ]
     
     for strategy_index, format_strategy in enumerate(format_strategies):
@@ -105,6 +123,23 @@ def download_video(
         if strategy_index < len(format_strategies) - 1:
             print(f"    ⚠️  Strategy {format_strategy} failed, trying next...")
             time.sleep(3)  # Delay between strategies
+    
+    # If all regular strategies failed, try Android client as last resort
+    print(f"    🔄 Trying Android client as last resort...")
+    for android_strategy in android_strategies:
+        command = _build_command_with_format(video, downloader, output_path, android_strategy, use_android=True)
+        attempt = 0
+        while attempt <= retries:
+            print(f"    🔄 Trying Android client strategy: {android_strategy}")
+            result = subprocess.run(command)
+            if result.returncode == 0:
+                path = _find_downloaded_file(output_path, video.get("id"))
+                if path:
+                    print(f"    ✅ Download successful with Android client!")
+                    return path
+            attempt += 1
+            if attempt <= retries:
+                time.sleep(2)
     
     print(f"    ❌ All download strategies failed for video")
     return None
