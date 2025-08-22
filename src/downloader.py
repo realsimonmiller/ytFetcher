@@ -91,10 +91,10 @@ def download_video(
     
     # Try different format strategies if the first one fails
     format_strategies = [
+        "bv*+ba/b",  # Best video + best audio, merged (most reliable)
         "best[height>=720]/best",  # Prefer 720p+ then best available
         "best[height>=480]/best",  # Prefer 480p+ then best available
         "best[height>=360]/best",  # Prefer 360p+ then best available
-        "bv*+ba/b",  # Best video + best audio, merged
         "best",  # Just get the best available
     ]
     
